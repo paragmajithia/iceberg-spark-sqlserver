@@ -1,11 +1,11 @@
 # Summary
 
 This is sample demo to show use of spark to pull data from sql server to apache ice-berg. It:
-- Creates and initializes sql server database
-- Setup spark cluster in standalone mode
-- Uses poetry to package python pyspark application
-- Pyspark app pulls data from containerized sql server database
-- Pyspark writes sql result to iceberg tables under .\warehouse directory
+- Creates and initializes docker container for sql server database
+- Setup docker containers for spark cluster in standalone mode
+- Builds pyspark based docker container that executes in spark cluster to pull data from sql server and writes to iceberg tables. It:
+    - Uses poetry for packaging and virtual env management
+    - Uses local Spark iceberg catalog to write sql data
 
 # Execution Steps 
 
@@ -17,7 +17,7 @@ Below are 2 options to run the app (with Or without docker)
     - Docker installed & docker engine running on local machine
     - Machine with min 7 GB RAM
     - Code is checked out into your local machine
-- Get 4 containers running (sql server, spark-master, spark-worker & spark history server)  using commands below
+- Launch docker containers (sql server, spark-master, spark-worker & spark history server)  using commands below
 
 ```
 ## Start the containers
@@ -27,7 +27,7 @@ docker-compose up --force-recreate --no-deps --build
 
 -- Verify if the Spark cluster is running be visiting http://localhost:8080/
 
-- Execute the python script (from /opt/spark folter)
+- Submit Spark job to load sql data to local iceberg tables (from /opt/spark folter)
 ```
 ## Bash into spark master container
 docker exec -it spark-master bash
