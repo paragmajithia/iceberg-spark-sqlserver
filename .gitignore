@@ -1,0 +1,10 @@
+**/__pycache__
+**/.DS_Store
+**/data/output
+**/warehouse
+
+# Ignore virtual env
+.venv/
+
+# Ignore sqlserver mount
+sqlserver-mount/

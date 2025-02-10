@@ -1,0 +1,18 @@
+[project]
+name = "iceberg-spark-sqlserver"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Parag Majithia"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyspark (>=3.5.4,<4.0.0)",
+    "python-dotenv (>=1.0.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

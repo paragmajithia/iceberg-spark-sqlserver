@@ -1,0 +1,102 @@
+name: ms-sql-server
+
+services:
+  sqlserver:
+    container_name: local-ms-sql-server-2022
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    hostname: local-ms-sql-server
+    environment:
+      ACCEPT_EULA: 'Y'
+      MSSQL_SA_PASSWORD: '${DB_PASSWORD:-StrongPwd@123}'
+      MSSQL_DATA_DIR: /var/opt/mssql/data
+      MSSQL_PID: 'Developer'
+      MSSQL_TCP_PORT: 1433
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '${DB_PASSWORD:-StrongPwd@123}' -C -Q 'SELECT 1' -b -o /dev/null
+      interval: 1m10s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./sqlserver-mount/data:/var/opt/mssql/data
+      - ./sqlserver-mount/log:/var/opt/mssql/log
+      - ./sqlserver-mount/secrets:/var/opt/mssql/secrets
+      - ./sqlserver-mount/backup:/var/opt/mssql/backup
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 4G
+  
+  sqlserver-configurator:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    volumes:
+      - ./sqlserver-scripts:/docker-entrypoint-initdb.d
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    command: >
+      bash -c '
+      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P '${DB_PASSWORD:-StrongPwd@123}' -C -d master -i docker-entrypoint-initdb.d/mssql-init.sql;
+      echo "All done!";
+      '
+
+  spark-master:
+    container_name: spark-master
+    build: 
+      dockerfile: Dockerfile
+      context: ./
+    image: spark-image
+    entrypoint: ['./entrypoint.sh', 'master']
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - ./iceberg_spark_sqlserver:/opt/spark/scripts
+      - spark-logs:/opt/spark/spark-events
+      - ./warehouse:/opt/spark/warehouse
+    env_file:
+      - .env.dev
+    ports:
+      - '8080:8080'
+      - '7077:7077'
+    depends_on: 
+      - sqlserver-configurator
+
+  spark-history-server:
+    container_name: spark-history
+    image: spark-image
+    entrypoint: ['./entrypoint.sh', 'history']
+    depends_on:
+      - spark-master
+    env_file:
+      - .env.dev
+    volumes:
+      - ./iceberg_spark_sqlserver:/opt/spark/scripts
+      - spark-logs:/opt/spark/spark-events
+      - ./warehouse:/opt/spark/warehouse
+    ports:
+      - '18080:18080'
+
+  spark-worker:
+    container_name: spark-worker
+    image: spark-image
+    entrypoint: ['./entrypoint.sh', 'worker']
+    depends_on:
+      - spark-master
+    env_file:
+      - .env.dev
+    volumes:
+      - ./iceberg_spark_sqlserver:/opt/spark/scripts
+      - spark-logs:/opt/spark/spark-events
+      - ./warehouse:/opt/spark/warehouse
+
+volumes:
+  spark-logs:
