@@ -1,37 +1,78 @@
-### Commands to start / stop sql server
+# Summary
 
+This is sample demo to show use of spark to pull data from sql server to apache ice-berg. It:
+- Creates and initializes sql server database
+- Setup spark cluster in standalone mode
+- Uses poetry to package python pyspark application
+- Pyspark app pulls data from containerized sql server database
+- Pyspark writes sql result to iceberg tables under .\warehouse directory
 
-```
-PS C:\Users\parag\OneDrive\Documents\Parag\Development\Docker\sqlServer> docker-compose up -d
-[+] Running 2/2
- ✔ Network ms-sql-server_default     Created                                                                                                                                                               0.1s 
- ✔ Container 2022-CU17-ubuntu-22.04  Started        
+# Execution Steps 
 
-====================
+Below are 2 options to run the app (with Or without docker)
 
-PS C:\Users\parag\OneDrive\Documents\Parag\Development\Docker\sqlServer> docker-compose down    
-[+] Running 2/2
- ✔ Container 2022-CU17-ubuntu-22.04  Removed                                                                                                                                                               1.7s 
- ✔ Network ms-sql-server_default     Removed   
+## Option 1: Execute via docker build 
 
-```
-
-
-### Connect to MS Sql server
-
-Use below details in SSMS (SQL server management studio)  
-
-**Database**: localhost  
-**User**: sa  
-**Password**: Pick from docker file  
-**Trust Server Certificate**: True  
-
-
-### Docker commands for python build / run
+- Pre-requisite:
+    - Docker installed & docker engine running on local machine
+    - Machine with min 7 GB RAM
+    - Code is checked out into your local machine
+- Get 4 containers running (sql server, spark-master, spark-worker & spark history server)  using commands below
 
 ```
-docker build -t parag.majithia/sqlserver-iceberg-demo:latest .
-
-docker run parag.majithia/sqlserver-iceberg-demo:latest
+## Start the containers
+docker-compose up --force-recreate --no-deps --build
 
 ```
+
+-- Verify if the Spark cluster is running be visiting http://localhost:8080/
+
+- Execute the python script (from /opt/spark folter)
+```
+## Bash into spark master container
+docker exec -it spark-master bash
+
+## Run python module
+./bin/spark-submit ./siceberg_spark_sqlserver/main.py
+```  
+
+## Option 2 --> Run without docker
+
+- Pre-requisite
+    - pyenv installed (>=3.1.1)
+    - poetry installed (>= 2.0.1)
+    - Machine with min 7 GB RAM
+    - Spark is installed
+    - Hadoop (winutils) for windows machine is installed
+    - Ensure following env variable is set:
+        - SPARK_HOME
+        - HADOOP_HOME 
+
+- VS Code Notes
+    - Python Lanugage Server: Pylance
+    - Pylance settings -> Type checking: basic 
+
+- Create virtual environment using poetry install from root of project
+```
+poetry install
+```
+
+- Add Spark runtime and extension jars, ms sql spark connector, ms sql jdbc driver jars in %SPARK_HOME%\jars folder
+
+```
+iceberg-spark-runtime-3.4_2.12-1.4.3.jar
+iceberg-spark-extensions-3.4_2.12-1.4.3.jar
+spark-mssql-connector_2.12-1.4.0-BETA.jar
+mssql-jdbc-12.8.1.jre11.jar
+```  
+
+- Set local ms sql server and initialize with dummy data
+```
+sqlcmd -S localhost -U sa -P 'StrongPwd@123' -C -d master -i iceberg_spark_sqlserver/mssql-init.sql
+```
+
+- Execute the spark job Or python script to load data from ms sql to iceberg table
+```
+python -m .iceberg_spark_sqlserver.main
+```
+

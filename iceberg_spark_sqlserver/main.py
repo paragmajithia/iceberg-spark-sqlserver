@@ -91,18 +91,6 @@ Creating / Replacing ice berg table
 ===========================
 """)
 
-# Create database
-# spark.sql(f"CREATE DATABASE IF NOT EXISTS productdb")
-
-# spark.sql("""
-#   CREATE TABLE IF NOT EXISTS product.productdb.product (
-#     id INT,
-#     name STRING,
-#     description STRING
-#   ) USING iceberg
-#   PARTITIONED BY (name)
-#   """)
-
 # Write and read Iceberg table
 table_name = f"product_ice_db.product"
 df.write.format("iceberg").mode("overwrite").saveAsTable(f"{table_name}")
