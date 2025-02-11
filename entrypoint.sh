@@ -2,7 +2,7 @@
 
 SPARK_WORKLOAD=$1
 
-echo "SPARK_WORKLOAD: $SPARK_WORKLOAD"
+echo "Input SPARK_WORKLOAD: $SPARK_WORKLOAD"
 
 if [ "$SPARK_WORKLOAD" == "master" ];
 then

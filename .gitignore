@@ -8,3 +8,6 @@
 
 # Ignore sqlserver mount
 sqlserver-mount/
+
+# Ignore local docs
+docs/
