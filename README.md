@@ -7,6 +7,12 @@ This is sample demo to show use of spark to pull data from sql server to apache 
     - Uses poetry for packaging and virtual env management
     - Uses local Spark iceberg catalog to write sql data
 
+
+# Data Flow
+
+![Data Flow](./image/DataFlow.gif)
+
+
 # Execution Steps 
 
 Below are 2 options to run the app (with Or without docker)
